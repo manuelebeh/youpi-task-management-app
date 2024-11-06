@@ -4,65 +4,72 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use App\Http\Requests\TaskRequest;
 
 class TaskController extends Controller
 {
-    public function index()
+    // Liste toutes les tâches de l'utilisateur authentifié
+    public function index(): JsonResponse
     {
+        // Récupère les tâches de l'utilisateur actuellement authentifié
         $tasks = auth()->user()->tasks;
+
+        // Retourne les tâches au format JSON
         return response()->json($tasks);
     }
 
-    public function store(Request $request): JsonResponse
+    // Crée une nouvelle tâche pour l'utilisateur authentifié
+    public function store(TaskRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'due_date' => 'required|date',
-            'status' => 'nullable|boolean',
-        ]);
+        // Utilise les données validées de TaskRequest pour créer une nouvelle tâche
+        $task = auth()->user()->tasks()->create($request->validated());
 
-        $task = auth()->user()->tasks()->create($validated);
-
+        // Retourne la tâche nouvellement créée avec un code de statut 201 (créé)
         return response()->json($task, 201);
     }
 
+    // Affiche une tâche spécifique si elle appartient à l'utilisateur authentifié
     public function show(Task $task): JsonResponse
     {
+        // Vérifie si l'utilisateur est propriétaire de la tâche
         if ($task->user_id !== auth()->id()) {
+            // Retourne une erreur si l'utilisateur n'est pas autorisé
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
+        // Retourne la tâche si elle appartient à l'utilisateur
         return response()->json($task);
     }
 
-    public function update(Request $request, Task $task)
+    // Met à jour une tâche existante si elle appartient à l'utilisateur authentifié
+    public function update(TaskRequest $request, Task $task): JsonResponse
     {
+        // Vérifie si l'utilisateur est propriétaire de la tâche
         if ($task->user_id !== auth()->id()) {
+            // Retourne une erreur si l'utilisateur n'est pas autorisé
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'due_date' => 'required|date',
-            'status' => 'nullable|boolean',
-        ]);
+        // Met à jour la tâche avec les données validées de TaskRequest
+        $task->update($request->validated());
 
-        $task->update($validated);
-
+        // Retourne la tâche mise à jour
         return response()->json($task);
     }
 
+    // Supprime une tâche spécifique si elle appartient à l'utilisateur authentifié
     public function destroy(Task $task): JsonResponse
     {
+        // Vérifie si l'utilisateur est propriétaire de la tâche
         if ($task->user_id !== auth()->id()) {
+            // Retourne une erreur si l'utilisateur n'est pas autorisé
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
+        // Supprime la tâche
         $task->delete();
 
+        // Retourne un message confirmant la suppression de la tâche
         return response()->json(['message' => 'Task deleted']);
     }
 }

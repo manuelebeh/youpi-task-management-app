@@ -1,5 +1,6 @@
 import { useRef, useEffect } from 'react';
 
+// Hooks pour définir le titre de la page
 export default function useDocumentTitle(title, prevailOnUnmount = false) {
     const defaultTitle = useRef(document.title);
 

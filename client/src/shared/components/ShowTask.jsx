@@ -3,8 +3,10 @@ import { useState, useEffect } from "react";
 import axiosInstance from "../config/axios.js";
 
 export default function ShowTask({ taskList, setTaskList, setTask, setNotification, MESSAGE_TYPES }) {
+    // État pour gérer le statut de chargement des tâches
     const [loading, setLoading] = useState(true);
 
+    // Fonction pour formater la date d'échéance au format français
     const formatDate = (date) => {
         return new Intl.DateTimeFormat("fr-FR", {
             day: "2-digit",
@@ -13,26 +15,20 @@ export default function ShowTask({ taskList, setTaskList, setTask, setNotificati
         }).format(new Date(date));
     };
 
+    // Fonction pour sélectionner une tâche à éditer
     const handleEdit = (id) => {
+        // Trouve la tâche correspondante par son identifiant et met à jour l'état 'task'
         const selectedTask = taskList.find((task) => task.id === id);
         setTask(selectedTask);
     };
 
+    // Fonction pour supprimer une tâche
     const handleDelete = async (id) => {
         try {
-            const token = localStorage.getItem("token");
+            // Effectue la requête de suppression de la tâche via l'API
+            const response = await axiosInstance.delete(`/tasks/${id}`);
 
-            if (!token) {
-                setNotification({ type: MESSAGE_TYPES.ERROR, message: "Token non trouvé." });
-                return;
-            }
-
-            const response = await axiosInstance.delete(`/tasks/${id}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
+            // Si la suppression réussit, met à jour la liste des tâches
             if (response.status === 200) {
                 const newTaskList = taskList.filter((task) => task.id !== id);
                 setTaskList(newTaskList);
@@ -47,14 +43,16 @@ export default function ShowTask({ taskList, setTaskList, setTask, setNotificati
         }
     };
 
+    // Effet qui vérifie si la liste des tâches est vide et met à jour l'état 'loading'
     useEffect(() => {
         if (taskList.length === 0) {
             setLoading(true);
         } else {
             setLoading(false);
         }
-    }, [taskList]);
+    }, [taskList]); // Dépend de taskList pour se mettre à jour lorsque celle-ci change
 
+    // Affiche un message de chargement si les tâches sont en train d'être récupérées
     if (loading) {
         return <div className='container'>Chargement des tâches...</div>;
     }
@@ -64,10 +62,12 @@ export default function ShowTask({ taskList, setTaskList, setTask, setNotificati
             <div className="d-flex justify-content-between mb-3">
                 <div className='flex-fill align-items-center justify-content-center'>
                     <span className="h4">Todo</span>
+                    {/* Affiche le nombre total de tâches */}
                     <span className="badge bg-primary ms-2">{taskList.length}</span>
                 </div>
             </div>
             <ul className="list-group">
+                {/* Affiche chaque tâche dans la liste */}
                 {taskList.map((task) => (
                     <li
                         key={task.id}
@@ -78,10 +78,12 @@ export default function ShowTask({ taskList, setTaskList, setTask, setNotificati
                                 <strong>{task.title}</strong>
                             </p>
                             <p className="mb-1">{task.description}</p>
+                            {/* Formate et affiche la date d'échéance */}
                             <small>{`Échéance: ${formatDate(task.due_date)}`}</small>
                             <p>Status: {task.status === 1 ? "Complété" : "En cours"}</p>
                         </div>
                         <div>
+                            {/* Boutons pour modifier ou supprimer la tâche */}
                             <button onClick={() => handleEdit(task.id)} className="btn btn-warning btn-sm me-2">
                                 Modifier
                             </button>
@@ -96,6 +98,7 @@ export default function ShowTask({ taskList, setTaskList, setTask, setNotificati
     );
 }
 
+// Définition des types attendus pour les props avec PropTypes
 ShowTask.propTypes = {
     taskList: PropTypes.arrayOf(
         PropTypes.shape({

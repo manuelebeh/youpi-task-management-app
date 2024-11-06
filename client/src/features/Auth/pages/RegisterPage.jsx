@@ -4,14 +4,19 @@ import AuthFormCard from "../components/AuthFormCard.jsx";
 import InputField from "../components/InputField.jsx";
 import axiosInstance from "../../../shared/config/axios.js";
 import { Link } from "react-router-dom";
+import useDocumentTitle from "../../../shared/hooks/useDocumentTitle.js";
 
 function RegisterPage() {
+    // États pour stocker les valeurs des champs de saisie
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [name, setName] = useState("");
     const navigate = useNavigate();
 
+    useDocumentTitle('Register')
+
+    // Redirection vers la page d'accueil si un token est déjà présent dans le localStorage
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (token) {
@@ -19,15 +24,18 @@ function RegisterPage() {
         }
     }, [navigate]);
 
+    // Gestionnaire de soumission du formulaire d'inscription
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        e.preventDefault(); // Empêche le rechargement de la page lors de la soumission
 
+        // Vérifie si les mots de passe correspondent avant de continuer
         if (password !== confirmPassword) {
             alert("Les mots de passe ne correspondent pas.");
             return;
         }
 
         try {
+            // Envoi de la requête d'inscription à l'API
             const response = await axiosInstance.post('/register', {
                 name,
                 email,
@@ -35,10 +43,13 @@ function RegisterPage() {
                 password_confirmation: confirmPassword,
             });
 
+            // Stocke le token dans le localStorage en cas de succès
             localStorage.setItem('token', response.data.token);
 
+            // Redirige vers la page d'accueil
             navigate('/');
         } catch (error) {
+            // Affiche un message d'erreur si l'inscription échoue
             console.error("Erreur lors de l'inscription", error.response?.data);
             alert("Erreur lors de l'inscription");
         }
@@ -48,6 +59,8 @@ function RegisterPage() {
         <div className="container">
             <AuthFormCard>
                 <form onSubmit={handleSubmit}>
+                    {/*ToDo: Faire comme dans le login et avoir l'erreur ici au lieu d'utiliser l'alert*/}
+
                     <h3 className="my-4">Créez un compte</h3>
 
                     <InputField

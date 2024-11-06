@@ -3,6 +3,7 @@ import ShowTask from "../shared/components/ShowTask.jsx";
 import { useEffect, useState } from "react";
 import AddTask from "../shared/components/AddTask.jsx";
 import axiosInstance from "../shared/config/axios.js";
+import useDocumentTitle from "../shared/hooks/useDocumentTitle.js";
 
 function HomePage() {
     const [taskList, setTaskList] = useState([]);
@@ -15,22 +16,14 @@ function HomePage() {
         SUCCESS: 'success'
     };
 
+    useDocumentTitle('HomePage');  // Change le titre de la page dans l'onglet du navigateur
+
     useEffect(() => {
         const fetchTasks = async () => {
             try {
-                const token = localStorage.getItem("token");
+                const response = await axiosInstance.get("/tasks");
 
-                if (!token) {
-                    setError("Vous devez être connecté pour accéder à vos tâches.");
-                    return;
-                }
-
-                const response = await axiosInstance.get("/tasks", {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
-
+                // Vérification du format des données reçues
                 if (Array.isArray(response.data)) {
                     setTaskList(response.data);
                 } else {
@@ -45,10 +38,10 @@ function HomePage() {
         };
 
         fetchTasks();
-    }, []);
+    }, []);  // L'effet ne se déclenche qu'une seule fois lors du premier rendu du composant
 
     if (error) {
-        return <div>{error}</div>;
+        return <div>{error}</div>;  // Affiche l'erreur en cas de problème
     }
 
     return (
