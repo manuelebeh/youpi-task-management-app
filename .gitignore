@@ -1,0 +1,50 @@
+# Exclusions pour le dossier client
+/client/logs
+/client/*.log
+/client/npm-debug.log*
+/client/yarn-debug.log*
+/client/yarn-error.log*
+/client/pnpm-debug.log*
+/client/lerna-debug.log*
+
+/client/node_modules
+/client/dist
+/client/dist-ssr
+/client/*.local
+
+# Dossiers et fichiers d'éditeur pour le client
+/client/.vscode/*
+!/client/.vscode/extensions.json
+/client/.idea
+/client/.DS_Store
+/client/*.suo
+/client/*.ntvs*
+/client/*.njsproj
+/client/*.sln
+/client/*.sw?
+
+# Exclusions pour le dossier backend
+/backend/.phpunit.cache
+/backend/node_modules
+/backend/public/build
+/backend/public/hot
+/backend/public/storage
+/backend/storage/*.key
+/backend/storage/pail
+/backend/vendor
+/backend/.env
+/backend/.env.backup
+/backend/.env.production
+/backend/.phpactor.json
+/backend/.phpunit.result.cache
+/backend/Homestead.json
+/backend/Homestead.yaml
+/backend/auth.json
+/backend/npm-debug.log
+/backend/yarn-error.log
+
+# Dossiers et fichiers d'éditeur pour le backend
+/backend/.fleet
+/backend/.idea
+/backend/.vscode
+/backend/.zed

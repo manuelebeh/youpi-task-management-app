@@ -1,0 +1,12 @@
+<svg width="120" height="40" viewBox="15 15 158 56" fill="none" xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink" data-v-b2386d14="">
+    <rect width="188" height="86" fill="url(#pattern0)" data-v-b2386d14=""></rect>
+    <defs data-v-b2386d14="">
+        <pattern id="pattern0" patternContentUnits="objectBoundingBox" width="1" height="1" data-v-b2386d14="">
+            <use xlink:href="#image0_58_27" transform="matrix(0.00212766 0 0 0.00465116 -0.00744681 0)"
+                 data-v-b2386d14=""></use>
+        </pattern>
+        <image id="image0_58_27" width="477" height="215" xlink:href="/images/youpi-noir-sans-fond.png"
+               data-v-b2386d14=""></image>
+    </defs>
+</svg>
