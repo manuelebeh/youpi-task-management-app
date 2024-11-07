@@ -1,8 +1,11 @@
-import { useNavigate } from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
+import {useDispatch} from 'react-redux';
 import axiosInstance from '../config/axios.js';
+import {logout} from "../redux/actions/authActions.js";
 
 export default function Header() {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const handleLogout = async () => {
         try {
@@ -13,13 +16,18 @@ export default function Header() {
                 return;
             }
 
+            // Envoie la requête de déconnexion
             await axiosInstance.post('/logout', {}, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
             });
 
+            // Supprime le token du localStorage et de Redux
             localStorage.removeItem('token');
+            dispatch(logout());
+
+            // Redirige vers la page de connexion
             navigate('/auth/login');
         } catch (error) {
             console.error("Erreur lors de la déconnexion :", error.response || error.message);

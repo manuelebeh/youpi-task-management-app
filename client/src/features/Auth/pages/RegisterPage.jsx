@@ -1,41 +1,44 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import AuthFormCard from "../components/AuthFormCard.jsx";
 import InputField from "../components/InputField.jsx";
 import axiosInstance from "../../../shared/config/axios.js";
-import { Link } from "react-router-dom";
 import useDocumentTitle from "../../../shared/hooks/useDocumentTitle.js";
+import {
+    registerFailure,
+    registerSuccess, resetFormState,
+    setConfirmPassword,
+    setEmail,
+    setName,
+    setPassword
+} from "../../../shared/redux/actions/authActions.js";
 
 function RegisterPage() {
-    // États pour stocker les valeurs des champs de saisie
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [name, setName] = useState("");
+    const dispatch = useDispatch();
     const navigate = useNavigate();
+    const { email, password, confirmPassword, name, error, isAuthenticated } = useSelector(state => state.auth);
 
-    useDocumentTitle('Register')
+    useDocumentTitle('Register');
 
-    // Redirection vers la page d'accueil si un token est déjà présent dans le localStorage
     useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (token) {
+        if (isAuthenticated) {
             navigate('/');
         }
-    }, [navigate]);
 
-    // Gestionnaire de soumission du formulaire d'inscription
+        // Réinitialiser uniquement les champs du formulaire, pas l'état d'authentification
+        dispatch(resetFormState());
+    }, [isAuthenticated, navigate, dispatch]);
+
     const handleSubmit = async (e) => {
-        e.preventDefault(); // Empêche le rechargement de la page lors de la soumission
+        e.preventDefault();
 
-        // Vérifie si les mots de passe correspondent avant de continuer
         if (password !== confirmPassword) {
-            alert("Les mots de passe ne correspondent pas.");
+            dispatch(registerFailure("Les mots de passe ne correspondent pas."));
             return;
         }
 
         try {
-            // Envoi de la requête d'inscription à l'API
             const response = await axiosInstance.post('/register', {
                 name,
                 email,
@@ -43,32 +46,31 @@ function RegisterPage() {
                 password_confirmation: confirmPassword,
             });
 
-            // Stocke le token dans le localStorage en cas de succès
             localStorage.setItem('token', response.data.token);
-
-            // Redirige vers la page d'accueil
+            dispatch(registerSuccess(response.data.token));
             navigate('/');
         } catch (error) {
-            // Affiche un message d'erreur si l'inscription échoue
             console.error("Erreur lors de l'inscription", error.response?.data);
-            alert("Erreur lors de l'inscription");
+            dispatch(registerFailure("Erreur lors de l'inscription"));
         }
     };
 
     return (
-        <div className="container">
+        <main className="container min-vh-100">
             <AuthFormCard>
                 <form onSubmit={handleSubmit}>
-                    {/*ToDo: Faire comme dans le login et avoir l'erreur ici au lieu d'utiliser l'alert*/}
+                    <h3 className="my-2">Créez un compte</h3>
 
-                    <h3 className="my-4">Créez un compte</h3>
+                    <div className="">
+                        {error && <p className="text-danger">{error}</p>}
+                    </div>
 
                     <InputField
                         label="Nom"
                         id="name"
                         type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        value={name || ""}
+                        onChange={(e) => dispatch(setName(e.target.value))}
                         autoComplete="name"
                     />
 
@@ -76,8 +78,8 @@ function RegisterPage() {
                         label="Adresse Mail"
                         id="email"
                         type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        value={email || ""}
+                        onChange={(e) => dispatch(setEmail(e.target.value))}
                         autoComplete="username"
                     />
 
@@ -85,8 +87,8 @@ function RegisterPage() {
                         label="Mot de passe"
                         id="password"
                         type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        value={password || ""}
+                        onChange={(e) => dispatch(setPassword(e.target.value))}
                         autoComplete="new-password"
                     />
 
@@ -94,17 +96,17 @@ function RegisterPage() {
                         label="Confirmer le mot de passe"
                         id="confirmPassword"
                         type="password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        value={confirmPassword || ""}
+                        onChange={(e) => dispatch(setConfirmPassword(e.target.value))}
                         autoComplete="new-password"
                     />
 
                     <button type="submit" className="btn btn-primary py-3 w-100">S'inscrire</button>
-
-                    <p className="text-center mt-3">Vous avez déjà un compte ? <Link to="/auth/login">Connectez-vous</Link></p>
+                    <p className="text-center mt-3">Vous avez déjà un compte ? <Link
+                        to="/auth/login">Connectez-vous</Link></p>
                 </form>
             </AuthFormCard>
-        </div>
+        </main>
     );
 }
 

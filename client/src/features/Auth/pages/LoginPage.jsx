@@ -1,65 +1,65 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {useEffect} from "react";
+import {Link, useNavigate} from "react-router-dom";
+import {useDispatch, useSelector} from "react-redux";
 import AuthFormCard from "../components/AuthFormCard.jsx";
 import InputField from "../components/InputField.jsx";
 import axiosInstance from "../../../shared/config/axios.js";
 import useDocumentTitle from "../../../shared/hooks/useDocumentTitle.js";
+import {
+    loginFailure,
+    loginSuccess,
+    resetFormState,
+    setEmail,
+    setPassword
+} from "../../../shared/redux/actions/authActions.js";
 
 function LoginPage() {
-    // États pour stocker les valeurs des champs de saisie et les messages d'erreur
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
+    const dispatch = useDispatch();
     const navigate = useNavigate();
+    const {email, password, error, isAuthenticated} = useSelector(state => state.auth);
 
-    useDocumentTitle('Login')
+    useDocumentTitle('Login');
 
-    // Redirection vers la page d'accueil si un token est déjà présent dans le localStorage
     useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (token) {
+        if (isAuthenticated) {
             navigate("/");
         }
-    }, [navigate]);
 
-    // Gestionnaire de soumission du formulaire de connexion
+        // Réinitialiser uniquement les champs du formulaire, pas l'état d'authentification
+        dispatch(resetFormState());
+    }, [isAuthenticated, navigate, dispatch]);
+
     const handleSubmit = async (e) => {
-        e.preventDefault(); // Empêche le rechargement de la page lors de la soumission
+        e.preventDefault();
 
         try {
-            // Requête pour envoyer les informations de connexion
-            const response = await axiosInstance.post('/login', {
-                email,
-                password,
-            });
-
-            // Stocke le token dans le localStorage en cas de succès
+            const response = await axiosInstance.post('/login', {email, password});
             localStorage.setItem("token", response.data.token);
-
-            // Redirige vers la page d'accueil
+            dispatch(loginSuccess(response.data.token));
+            console.log('isAuthenticated après connexion:', isAuthenticated); // Vérification ici
             navigate("/");
         } catch (error) {
-            // Affiche un message d'erreur si la connexion échoue
             console.error("Erreur lors de la connexion", error.response?.data);
-            setError("Adresse email ou mot de passe incorrect");
+            dispatch(loginFailure("Adresse email ou mot de passe incorrect"));
         }
     };
 
     return (
-        <div className="container">
+        <main className="container min-vh-100">
             <AuthFormCard>
                 <form onSubmit={handleSubmit}>
-                    <div className="text-center">
+                    <h3 className="my-2">Connectez-vous</h3>
+
+                    <div className="">
                         {error && <p className="text-danger">{error}</p>}
                     </div>
-                    <h3 className="my-4">Connectez-vous</h3>
 
                     <InputField
                         label="Adresse Mail"
                         id="email"
                         type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        value={email || ""}
+                        onChange={(e) => dispatch(setEmail(e.target.value))}
                         autoComplete="username"
                     />
 
@@ -67,18 +67,17 @@ function LoginPage() {
                         label="Mot de passe"
                         id="password"
                         type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        value={password || ""}
+                        onChange={(e) => dispatch(setPassword(e.target.value))}
                         autoComplete="current-password"
                     />
 
                     <button type="submit" className="btn btn-primary py-3 w-100">Connexion</button>
-
-                    <p className='text-center mt-3'>Vous êtes nouveau ? <Link to='/auth/register'>Inscrivez
-                        vous</Link></p>
+                    <p className='text-center mt-3'>Vous êtes nouveau ? <Link to='/auth/register'>Inscrivez-vous</Link>
+                    </p>
                 </form>
             </AuthFormCard>
-        </div>
+        </main>
     );
 }
 

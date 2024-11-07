@@ -1,152 +1,151 @@
-import { useEffect, useRef } from "react";
-import PropTypes from 'prop-types';
-import axiosInstance from "../config/axios.js";
+import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
+import PropTypes from "prop-types";
+import { addTask, updateTask } from "../redux/actions/taskActions";
 
-// Définition des types attendus pour les props avec PropTypes
-AddTask.propTypes = {
-    taskList: PropTypes.array.isRequired,
-    setTaskList: PropTypes.func.isRequired,
-    task: PropTypes.object.isRequired,
-    setTask: PropTypes.func.isRequired,
-    notification: PropTypes.object.isRequired,
-    setNotification: PropTypes.func.isRequired,
-    MESSAGE_TYPES: PropTypes.object.isRequired
-};
+function AddTask({ task, setTask }) {
+    const [formData, setFormData] = useState({
+        title: "",
+        description: "",
+        due_date: "",
+        status: 0,
+    });
 
-export default function AddTask({ taskList, setTaskList, task, setTask, notification, setNotification, MESSAGE_TYPES }) {
-    // Référence pour le champ d'entrée du titre de la tâche
-    const inputRef = useRef();
+    const [notification, setNotification] = useState("");
+    const [formErrors, setFormErrors] = useState({
+        title: false,
+        description: false,
+        due_date: false,
+    });
 
-    // Focus automatique sur le champ d'entrée du titre si une tâche est en cours d'édition
+    const dispatch = useDispatch();
+
     useEffect(() => {
-        if (task.id) {
-            inputRef.current.focus();
+        if (task) {
+            const formattedDate = task.due_date
+                ? new Date(task.due_date).toISOString().slice(0, 16)
+                : "";
+            setFormData({
+                title: task.title || "",
+                description: task.description || "",
+                due_date: formattedDate || "",
+                status: task.status || 0,
+            });
         }
     }, [task]);
 
-    // Réinitialise les notifications après 5 secondes
-    useEffect(() => {
-        if (notification.message) {
-            const timer = setTimeout(() => {
-                setNotification({ type: '', message: '' });
-            }, 5000);
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
 
-            return () => clearTimeout(timer);
+        // Réinitialiser l'erreur de champ dès que l'utilisateur modifie un champ
+        setFormErrors({ ...formErrors, [name]: false });
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
+        // Vérification que tous les champs sont remplis
+        const errors = {
+            title: !formData.title,
+            description: !formData.description,
+            due_date: !formData.due_date,
+        };
+
+        setFormErrors(errors);
+
+        if (errors.title || errors.description || errors.due_date) {
+            setNotification("Tous les champs doivent être remplis !");
+            return;
         }
-    }, [notification, setNotification]);
 
-    // Gestionnaire de soumission du formulaire pour ajouter ou mettre à jour une tâche
-    const handleSubmit = async (e) => {
-        e.preventDefault(); // Empêche le rechargement de la page
+        // Si la notification est vide, on soumet les données
+        setNotification("");
 
-        // Récupère et nettoie les valeurs des champs de saisie
-        const title = e.target.taskName.value.trim();
-        const description = e.target.description.value.trim();
-        const due_date = e.target.dueDate.value.trim();
-        const status = e.target.status.value === "completed" ? 1 : 0;
-
-        // Vérifie que tous les champs sont remplis
-        if (title && description && due_date) {
-            try {
-                let response;
-
-                // Si un identifiant de tâche est présent, la tâche est mise à jour ; sinon, elle est ajoutée
-                if (task.id) {
-                    response = await axiosInstance.put(`/tasks/${task.id}`, {
-                        title,
-                        description,
-                        due_date,
-                        status,
-                    });
-
-                    // Met à jour la liste des tâches en cas de succès
-                    if (response.status === 200) {
-                        const updatedTaskList = taskList.map((todo) =>
-                            todo.id === task.id ? response.data : todo
-                        );
-                        setTaskList(updatedTaskList);
-                        setNotification({ type: MESSAGE_TYPES.SUCCESS, message: "Tâche mise à jour" });
-                    }
-                } else {
-                    response = await axiosInstance.post('/tasks', {
-                        title,
-                        description,
-                        due_date,
-                        status,
-                    });
-
-                    // Ajoute la nouvelle tâche à la liste en cas de succès
-                    if (response.status === 201) {
-                        setTaskList([...taskList, response.data]);
-                        setNotification({ type: MESSAGE_TYPES.SUCCESS, message: "Tâche ajoutée avec succès" });
-                    }
-                }
-
-                // Réinitialise l'état de la tâche après l'opération
-                setTask({});
-            } catch (error) {
-                // Définit une notification d'erreur en cas d'échec de l'ajout/mise à jour
-                const errorMessage = error.response?.data?.message || "Erreur lors de la sauvegarde de la tâche.";
-                setNotification({ type: MESSAGE_TYPES.ERROR, message: errorMessage });
-            }
+        if (task && task.id) {
+            // Mise à jour de la tâche
+            dispatch(updateTask({ ...formData, id: task.id }));
+            dispatch({ type: 'SET_TASK', payload: null });
+            setNotification("Tâche modifiée avec succès !");
         } else {
-            // Notification d'erreur si des champs sont manquants
-            setNotification({ type: MESSAGE_TYPES.ERROR, message: "Tous les champs sont obligatoires." });
+            // Ajout de la nouvelle tâche
+            dispatch(addTask(formData));
+            setNotification("Tâche ajoutée avec succès !");
         }
+
+        // Réinitialiser le formulaire et la tâche
+        setFormData({ title: "", description: "", due_date: "", status: 0 });
+        setTask(null);
+
+        // Masquer la notification après 5 secondes
+        setTimeout(() => setNotification(""), 8000);
     };
 
     return (
-        <>
-            {/* Affiche les notifications en fonction de leur type */}
-            {notification.type === MESSAGE_TYPES.ERROR && <div className="alert alert-danger">{notification.message}</div>}
-            {notification.type === MESSAGE_TYPES.SUCCESS && <div className="alert alert-success">{notification.message}</div>}
+        <div className="container my-5">
+            <h2 className='mb-5 text-center'>Task Management</h2>
 
-            {/* Formulaire pour ajouter ou mettre à jour une tâche */}
-            <section className="addTask container my-5">
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-3">
-                        <input
-                            ref={inputRef}
-                            type="text"
-                            className="form-control"
-                            name="taskName"
-                            placeholder="Titre de la tâche"
-                            value={task.title || ""}
-                            onChange={e => setTask({ ...task, title: e.target.value })}
-                        />
-                    </div>
-                    <div className="mb-3">
-                        <textarea
-                            className="form-control"
-                            name="description"
-                            placeholder="Description de la tâche"
-                            value={task.description || ""}
-                            onChange={e => setTask({ ...task, description: e.target.value })}
-                        />
-                    </div>
-                    <div className="mb-3">
-                        <input
-                            type="datetime-local"
-                            className="form-control"
-                            name="dueDate"
-                            value={task.due_date || ""}
-                            onChange={e => setTask({ ...task, due_date: e.target.value })}
-                        />
-                    </div>
-                    <div className="mb-3">
-                        <select
-                            className="form-select"
-                            name="status"
-                            value={task.status === 1 ? "completed" : "not completed"}
-                            onChange={e => setTask({ ...task, status: e.target.value === "completed" ? 1 : 0 })}
-                        >
-                            <option value="not completed">Non terminée</option>
-                            <option value="completed">Terminée</option>
-                        </select>
-                    </div>
-                    <button type="submit" className="btn btn-primary w-100">{task.id ? "Mettre à jour" : "Ajouter"}</button>
-                </form>
-            </section>
-        </>
+            {/* Afficher la notification si présente */}
+            {notification && (
+                <div className={`alert ${notification.includes("remplis") ? "alert-danger" : "alert-success"}`}>
+                    {notification}
+                </div>
+            )}
+
+            <form onSubmit={handleSubmit}>
+                <div className="mb-3">
+                    <input
+                        type="text"
+                        className={`form-control ${formErrors.title ? 'is-invalid' : ''}`}
+                        name="title"
+                        placeholder="Titre de la tâche"
+                        value={formData.title}
+                        onChange={handleChange}
+                    />
+                    {formErrors.title && <div className="invalid-feedback">Ce champ est requis</div>}
+                </div>
+                <div className="mb-3">
+                    <textarea
+                        className={`form-control ${formErrors.description ? 'is-invalid' : ''}`}
+                        name="description"
+                        placeholder="Description de la tâche"
+                        value={formData.description}
+                        onChange={handleChange}
+                    />
+                    {formErrors.description && <div className="invalid-feedback">Ce champ est requis</div>}
+                </div>
+                <div className="mb-3">
+                    <input
+                        type="datetime-local"
+                        className={`form-control ${formErrors.due_date ? 'is-invalid' : ''}`}
+                        name="due_date"
+                        value={formData.due_date}
+                        onChange={handleChange}
+                    />
+                    {formErrors.due_date && <div className="invalid-feedback">Ce champ est requis</div>}
+                </div>
+                <div className="mb-3">
+                    <select
+                        className="form-select"
+                        name="status"
+                        value={formData.status}
+                        onChange={handleChange}
+                    >
+                        <option value={0}>En cours</option>
+                        <option value={1}>Complété</option>
+                    </select>
+                </div>
+                <button type="submit" className="btn btn-primary w-100">
+                    {task && task.id ? "Mettre à jour" : "Ajouter"}
+                </button>
+            </form>
+        </div>
     );
 }
+
+AddTask.propTypes = {
+    task: PropTypes.object,
+    setTask: PropTypes.func.isRequired,
+};
+
+export default AddTask;

@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import {createBrowserRouter} from "react-router-dom";
 import PageNotFound from "./features/PageNotFound.jsx";
 import RegisterPage from "./features/Auth/pages/RegisterPage.jsx";
 import LoginPage from "./features/Auth/pages/LoginPage.jsx";
@@ -7,23 +7,23 @@ import PrivateRoute from "./shared/config/PrivateRoute.jsx";
 
 export const router = createBrowserRouter([
     {
-        errorElement: <PageNotFound />,
+        errorElement: <PageNotFound/>,
         children: [
             {
                 path: "/",
                 element: (
                     <PrivateRoute>
-                        <HomePage />
+                        <HomePage/>
                     </PrivateRoute>
                 ),
             },
             {
                 path: "/auth/login",
-                element: <LoginPage />,
+                element: <LoginPage/>,
             },
             {
                 path: "/auth/register",
-                element: <RegisterPage />,
+                element: <RegisterPage/>,
             },
         ],
     },
