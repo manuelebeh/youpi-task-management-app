@@ -36,7 +36,6 @@ function LoginPage() {
             const response = await axiosInstance.post('/login', {email, password});
             localStorage.setItem("token", response.data.token);
             dispatch(loginSuccess(response.data.token));
-            console.log('isAuthenticated après connexion:', isAuthenticated); // Vérification ici
             navigate("/");
         } catch (error) {
             console.error("Erreur lors de la connexion", error.response?.data);
