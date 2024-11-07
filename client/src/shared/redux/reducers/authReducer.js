@@ -1,7 +1,7 @@
 const initialState = {
     token: localStorage.getItem('token') || null,
     error: null,
-    isAuthenticated: false,
+    isAuthenticated: !!localStorage.getItem('token'), // Initialisation basée sur le token
     email: '',
     password: '',
     confirmPassword: '',
@@ -29,7 +29,6 @@ const authReducer = (state = initialState, action) => {
             return {...state, confirmPassword: action.payload};
         case 'LOGIN_SUCCESS':
         case 'REGISTER_SUCCESS':
-            console.log('LOGIN_SUCCESS action déclenchée');
             return {
                 ...state,
                 token: action.payload,
@@ -55,4 +54,4 @@ const authReducer = (state = initialState, action) => {
     }
 };
 
-export default authReducer;
+export default authReducer

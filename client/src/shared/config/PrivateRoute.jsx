@@ -1,11 +1,12 @@
-import {Navigate} from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import PropTypes from "prop-types";
+import { useSelector } from "react-redux";
 
-//Configuration pour protéger les routes
-const PrivateRoute = ({children}) => {
-    const token = localStorage.getItem("token");
+// Composant pour protéger les routes
+const PrivateRoute = ({ children }) => {
+    const isAuthenticated = useSelector(state => state.auth.isAuthenticated);
 
-    return token ? children : <Navigate to="/auth/login"/>;
+    return isAuthenticated ? children : <Navigate to="/auth/login" />;
 };
 
 PrivateRoute.propTypes = {
